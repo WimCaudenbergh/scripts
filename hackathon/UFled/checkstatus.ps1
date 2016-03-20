@@ -22,9 +22,18 @@ Function Start-Monitoring
         
         # //TODO Loop all devices from XML file
 
-        Update-DeviceState 'ESP Rack 2'
-	
-        Start-Sleep -s 1
+        Update-DeviceState 'ESP Rack 1'
+        # Update-DeviceState 'ESP Rack 2'
+        # Update-DeviceState 'ESP Rack 3'
+        write-host "-----"
+        # foreach( $device in $devicesXML.devices.device) 
+        # { 
+        #     if ($device.ESP = "True") {
+        #         $device
+        #         Update-DeviceState 'ESP Rack 2'
+        #     }
+        # }  
+        Start-Sleep -s 10
     }
 }
 
@@ -88,6 +97,7 @@ Function Update-LedState($ip, $state)
     }catch{
         write-host $newline "Timed out while requesting $ESPurl" $newline
         $timeout=$true
+        $deviceNode.name
     }
 
     if (!$timeout) {

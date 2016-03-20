@@ -7,6 +7,7 @@
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
 		<LEDupToDate>No</LEDupToDate>
+		<ESP>True</ESP>
 	</device>
 	<device>
 		<name>ESP Rack 2</name>
@@ -16,6 +17,7 @@
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
 		<LEDupToDate>No</LEDupToDate>
+		<ESP>True</ESP>
 	</device>
 	<device>
 		<name>ESP Rack 3</name>
@@ -25,11 +27,13 @@
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
 		<LEDupToDate>No</LEDupToDate>
+		<ESP>True</ESP>
 	</device>
 	<device>
 		<name>Zwaailicht</name>
 		<role>Beacon</role>
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
+		<ESP>No</ESP>
 	</device>
 </devices>
