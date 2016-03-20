@@ -1,0 +1,28 @@
+<devices version='0.1'>
+	<device>
+		<name>ESP Rack 1</name>
+		<role>LED</role>
+		<ip>192.168.0.101</ip>
+		<MAC>01-23-45-67-89-ab</MAC>
+		<PRTGidToCheck>25272</PRTGidToCheck>
+	</device>
+	<device>
+		<name>ESP Rack 2</name>
+		<role>LED</role>
+		<ip>192.168.0.102</ip>
+		<MAC>02-23-45-67-89-ab</MAC>
+		<PRTGidToCheck>25272</PRTGidToCheck>
+	</device>
+	<device>
+		<name>ESP Rack 3</name>
+		<role>LED</role>
+		<ip>192.168.0.103</ip>
+		<MAC>03-23-45-67-89-ab</MAC>
+		<PRTGidToCheck>25272</PRTGidToCheck>
+	</device>
+	<device>
+		<name>Zwaailicht</name>
+		<role>Beacon</role>
+		<PRTGidToCheck>25272</PRTGidToCheck>
+	</device>
+</devices>
