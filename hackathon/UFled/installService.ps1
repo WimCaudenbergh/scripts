@@ -1,0 +1,2 @@
+# Start-Process -FilePath C:\UFled\nssm.exe -ArgumentList 'install UFled "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "-command "& { . C:\UFled\checkstatus.ps1; Start-Monitoring }"" ' -NoNewWindow -Wait
+Start-Process -FilePath C:\UFled\nssm.exe -ArgumentList 'install UFled "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" "-command "& { . C:\UFled\checkstatus.ps1 }"" ' -NoNewWindow -Wait
