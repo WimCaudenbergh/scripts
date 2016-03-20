@@ -5,6 +5,8 @@
 		<ip>192.168.0.101</ip>
 		<MAC>01-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
+		<currentState>Unchecked</currentState>
+		<LEDupToDate>No</LEDupToDate>
 	</device>
 	<device>
 		<name>ESP Rack 2</name>
@@ -12,6 +14,8 @@
 		<ip>192.168.0.102</ip>
 		<MAC>02-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
+		<currentState>Unchecked</currentState>
+		<LEDupToDate>No</LEDupToDate>
 	</device>
 	<device>
 		<name>ESP Rack 3</name>
@@ -19,10 +23,13 @@
 		<ip>192.168.0.103</ip>
 		<MAC>03-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
+		<currentState>Unchecked</currentState>
+		<LEDupToDate>No</LEDupToDate>
 	</device>
 	<device>
 		<name>Zwaailicht</name>
 		<role>Beacon</role>
 		<PRTGidToCheck>25272</PRTGidToCheck>
+		<currentState>Unchecked</currentState>
 	</device>
 </devices>
