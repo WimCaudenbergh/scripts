@@ -1,7 +1,6 @@
 Import-Module ".\changeDevices.psm1"
 
 $xml = New-Object System.Xml.XmlDocument
-# $web = New-Object Net.WebClient
 $devicesXML = Get-DevicesXML 
 $DevicesLoaded = 0
 Set-Variable -name DevicesLoaded -scope Script
@@ -19,31 +18,27 @@ Function Start-Monitoring
         Update-DeviceXML
 
         $NextRefresh = $DeviceRefreshTime - $DevicesLoaded
-        
-        # //TODO Loop all devices from XML file
+         
+        foreach( $device in $devicesXML.devices.device) 
+        { 
+            if ($device.ESP -eq "True") {
+                Update-DeviceState $device.name
+            }
+        }  
 
-        Update-DeviceState 'ESP Rack 1'
-        # Update-DeviceState 'ESP Rack 2'
-        # Update-DeviceState 'ESP Rack 3'
-        write-host "-----"
-        # foreach( $device in $devicesXML.devices.device) 
-        # { 
-        #     if ($device.ESP = "True") {
-        #         $device
-        #         Update-DeviceState 'ESP Rack 2'
-        #     }
-        # }  
-        Start-Sleep -s 10
+        write-host $newline "-----    Next refresh in $NextRefresh loop(s)    -----" $newline
+
+        Start-Sleep -s 5
     }
 }
+
 
 Function Update-DeviceState($name)
 {
 
-    if ($deviceNode -eq $null) {
-        $Script:deviceNode = $Script:devicesXML.devices.device | where {$_.name -eq $name}
-    }
-        
+    $Script:deviceNode = $Script:devicesXML.devices.device | where {$_.name -eq $name}
+
+
     $PRTGurl= "https://monitor.uf.be/api/getobjectstatus.htm?id=" + $deviceNode.PRTGidToCheck + "&name=status&show=text&username=ufadmin&passhash=560266657"
     $xml.Load($PRTGurl)
     $Script:state = $xml.prtg.result 
@@ -58,24 +53,22 @@ Function Update-DeviceState($name)
     
     if ($deviceNode.currentState -ne $state) {
         $s = $deviceNode.currentState
-        
-        write-host $newline"Change state of " -nonewline; 
-        write-host "$name " -nonewline -foregroundcolor yellow; 
-        write-host "from " -nonewline;
-        write-host "$s " -nonewline -foregroundcolor red;
-        write-host "to " -nonewline;
-        write-host "$state" -foregroundcolor red
-        
+              
+        Write-Comment 1 $name $s $state
+
         $deviceNode.currentState = $state
-        $deviceNode
+       
         Update-LedState $deviceNode.ip $state
-    }
+    }elseif($deviceNode.LEDupToDate -eq "False"){
+        
+        Write-Comment 2 $name
 
-    # keep trying if timedout last time
-    if ($deviceNode.LEDupToDate -eq "No") {
         Update-LedState $deviceNode.ip $state
-    }
+    }else{
 
+        Write-Comment 3 $name
+
+    }
 
 }
 
@@ -84,11 +77,8 @@ Function Update-LedState($ip, $state)
 
     $ESPurl = "http://$ip/state/$state"
     # $ESPurl = "http://google.be"
-    write-host "Set LED-state to " -nonewline; 
-    write-host "$state " -nonewline -foregroundcolor red; 
-    write-host "on "  -nonewline; 
-    write-host "$ip" -nonewline -foregroundcolor yellow; 
-    write-host "       ==>  $ESPurl" -foregroundcolor green
+
+    Write-Comment 4 $ip $state $ESPurl
 
     #try invoking the ESP url that switches the LEDs. Do nothing if the page times out. 
     try {
@@ -97,12 +87,12 @@ Function Update-LedState($ip, $state)
     }catch{
         write-host $newline "Timed out while requesting $ESPurl" $newline
         $timeout=$true
-        $deviceNode.name
+        
     }
 
     if (!$timeout) {
-        write-host "connected to webserver"
-        $Script:deviceNode.LEDupToDate = "Yes"
+        write-host "Connected to webserver. LED should be up to date."
+        $Script:deviceNode.LEDupToDate = "True"
         $timeout=$false
     }
 
@@ -110,15 +100,61 @@ Function Update-LedState($ip, $state)
 
 Function Update-DeviceXML
 {
-    # update devices if not updated a minute ago
+    # update devices after a couple of loops
 
     if ($DevicesLoaded -ge $DeviceRefreshTime) {
         $Script:devicesXML = Get-DevicesXML   
-      
         $Script:DevicesLoaded = 0 
+
+        Write-host "Updating the device list. Resetting status of devices to " -nonewline;
+        write-host "Unchecked" -foregroundcolor red
+
     }else {
         $Script:DevicesLoaded += 1
     }    
+}
+
+
+Function Write-Comment($case, $nameorip, $state1, $state2)
+{
+    switch ($case) 
+    { 
+        1 
+        {
+            write-host $newline"Change state of " -nonewline; 
+            write-host "$nameorip " -nonewline -foregroundcolor yellow; 
+            write-host "from " -nonewline;
+            write-host "$state1 " -nonewline -foregroundcolor red;
+            write-host "to " -nonewline;
+            write-host "$state2" -foregroundcolor red   
+        }
+
+        2 
+        {
+            write-host $newline"State of " -nonewline; 
+            write-host "$nameorip " -nonewline -foregroundcolor yellow; 
+            write-host "not changed. But the LED is not up to date. Trying again."
+        } 
+        
+        3 
+        {
+            write-host $newline"State of " -nonewline; 
+            write-host "$nameorip " -nonewline -foregroundcolor yellow; 
+            write-host "not changed. Skipping" 
+        } 
+        
+        4 
+        {
+            write-host "Set LED-state to " -nonewline; 
+            write-host "$state1 " -nonewline -foregroundcolor red; 
+            write-host "on "  -nonewline; 
+            write-host "$nameorip" -nonewline -foregroundcolor yellow; 
+            write-host "       ==>  $state2" -foregroundcolor green
+        } 
+        5 {"The color is orange."} 
+        default {"Write-Comment function error, wrong parameters given."}
+    }
+
 }
 
 

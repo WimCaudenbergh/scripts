@@ -6,7 +6,7 @@
 		<MAC>01-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
-		<LEDupToDate>No</LEDupToDate>
+		<LEDupToDate>False</LEDupToDate>
 		<ESP>True</ESP>
 	</device>
 	<device>
@@ -16,7 +16,7 @@
 		<MAC>02-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
-		<LEDupToDate>No</LEDupToDate>
+		<LEDupToDate>False</LEDupToDate>
 		<ESP>True</ESP>
 	</device>
 	<device>
@@ -26,7 +26,7 @@
 		<MAC>03-23-45-67-89-ab</MAC>
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
-		<LEDupToDate>No</LEDupToDate>
+		<LEDupToDate>False</LEDupToDate>
 		<ESP>True</ESP>
 	</device>
 	<device>
@@ -34,6 +34,6 @@
 		<role>Beacon</role>
 		<PRTGidToCheck>25272</PRTGidToCheck>
 		<currentState>Unchecked</currentState>
-		<ESP>No</ESP>
+		<ESP>False</ESP>
 	</device>
 </devices>
