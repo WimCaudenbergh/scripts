@@ -50,6 +50,7 @@ function generateAddresses($first, $last){
 
 #TODO ask role: APP, HR, Management, MSP, OI, PLT, SOL, intern, external
 #TODO ask mobile number
+#TODO correct Dial-in settings
 
 
 $FirstName = Read-Host "`n First name"
