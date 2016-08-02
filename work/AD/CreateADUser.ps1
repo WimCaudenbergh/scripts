@@ -49,6 +49,7 @@ function generateAddresses($first, $last){
 
 
 #TODO ask role: APP, HR, Management, MSP, OI, PLT, SOL, intern, external
+#TODO ask mobile number
 
 
 $FirstName = Read-Host "`n First name"
@@ -91,10 +92,24 @@ while("y","n" -notcontains $fapgroup)
     $fapgroup = Read-Host " Y or N"
 }
 
-
+########################################################
+#TODO: Sync with Office365
+########################################################
 
 ########################################################
-#generate variables
+#TODO: Office365 settings (licenses, groups, ...)
+########################################################
+
+########################################################
+#TODO: Exchange online settings
+########################################################
+
+########################################################
+#TODO: SFB settings
+########################################################
+
+########################################################
+#output
 ########################################################
 
 
@@ -128,3 +143,4 @@ if ($correct -eq "y") {
     Write-Host "`n exiting"
     exit
 }
+
