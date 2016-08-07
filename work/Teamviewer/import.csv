@@ -1,0 +1,4 @@
+name,email,permissions,password
+"Admin",admin@example.com,"ManageUsers,ShareOwnGroups,EditFullProfile,ViewAllConnections,ViewOwnConnections,EditConnections,DeleteConnections,ManagePolicies,AssignPolicies,AcknowledgeAllAlerts,AcknowledgeOwnAlerts,ViewAllAssets,ViewOwnAssets,EditAllCustomModuleConfigs,EditOwnCustomModuleConfigs",
+"User1",user1@example.com,"ShareOwnGroups,EditFullProfile,ViewOwnConnections,EditConnections,DeleteConnections,AcknowledgeOwnAlerts,ViewOwnAssets,EditOwnCustomModuleConfigs",
+"User2",user2@example.com,,

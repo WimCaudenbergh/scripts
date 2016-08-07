@@ -317,6 +317,201 @@ function createUser{
     #Get-ADUser username| Set-ADUser -replace @{msnpallowdialin=$true}
 
 }
+
+function connectoToMsol{
+
+    Connect-MsolService -Credential $global:o365credential 
+}
+
+function connectToExchangeOnline{
+
+    $global:EOSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $global:o365credential -Authentication Basic -AllowRedirection
+    Import-PSSession $global:EOSession
+
+}
+
+function disconnectFromExchangeOnline{
+
+    Remove-PSSession $global:EOSession
+
+}
+
+function askForO365Licenses{
+    $title = " Office 365 licenses"
+    $message = " Does the user need the default licenses? (Office 365 E3, Intune and CRM)"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Assign default licenses."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Assign specific licenses."
+
+    $skip = New-Object System.Management.Automation.Host.ChoiceDescription "&Skip", `
+        " skip this step"
+
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no, $skip)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {assignOffice365licenses($True, $True, $True)}
+            1 {askForO365LicensesSpecific}
+            2 {"Skipping license assignment"}
+        }
+}
+
+function askForO365LicensesSpecific{
+    $title = " Office 365 E3"
+    $message = " Does the user need Office 365 E3?"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Assign license."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Don't assing license."
+
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {$e3 = $True}
+            1 {$e3 = $False}
+        }  
+
+
+
+    $title = " Intune"
+    $message = " Does the user need Intune?"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Assign license."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Don't assing license."
+
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {$intune = $True}
+            1 {$intune = $False}
+        }   
+
+    $title = " CRM"
+    $message = " Does the user need CRM?"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Assign license."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Don't assing license."
+
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {$CRM = $True}
+            1 {$CRM = $False}
+        } 
+
+    assignOffice365licenses $e3 $intune $CRM
+
+}
+
+function assignOffice365licenses($e3, $intune, $CRM){
+    <#
+    available licenses
+    AccountSkuId                    ActiveUnits WarningUnits ConsumedUnits
+    ------------                    ----------- ------------ -------------
+    UF365:POWERAPPS_INDIVIDUAL_USER 10000       0            2
+    UF365:AAD_BASIC                 100         0            0
+    UF365:ENTERPRISEPACK            100         0            83             ----> Office365 E3
+    UF365:CRMSTANDARD               1           0            0
+    UF365:POWER_BI_STANDARD         1000003     0            3
+    UF365:INTUNE_A                  100         0            39             ----> Intune
+    UF365:CRMIUR                    60          0            50             ----> CRM
+    #>       
+
+    #TODO: finish function
+
+    $upn = $global:username"@uf.be"
+
+    if ($e3 -eq $True) {
+        Write-Host "Setting E3 license"
+        Set-MsolUserLicense -UserPrincipalName $upn -AddLicenses "UF365:ENTERPRISEPACK" 
+    }
+
+    if ($intune -eq $True) {
+        Write-Host "Setting Intune license"
+        Set-MsolUserLicense -UserPrincipalName $upn -AddLicenses "UF365:INTUNE_A" 
+    }
+
+    if ($CRM -eq $True) {
+        Write-Host "setting CRM license"
+        Set-MsolUserLicense -UserPrincipalName $upn -AddLicenses "UF365:CRMIUR" 
+    }
+        
+}
+
+function askForO365GroupMembership{
+    $title = " Office 365 groups"
+    $message = " Add the user to the default groups?"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Add user to the default groups."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Don't add the user to any groups."
+
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {addUserToMsolGroups}
+            1 {"Skipping group assignment"}
+        }
+}
+
+function addUserToMsolGroups{
+    $upn = $global:username"@uf.be"
+    $memberid = Get-MsolUser -UserPrincipalName $upn
+    $groupid = Get-MsolGroup | Where-Object {$_.DisplayName -eq "Userfull for SPS"}
+    Add-MsolGroupMember -GroupObjectId $groupid.ObjectId -GroupMemberObjectId $memberid.ObjectId -GroupMemberType Use
+}
+
+function enableOnlineArchive{
+    $upn = $global:username"@uf.be"
+
+    $title = " Exchange Online archive"
+    $message = " Enabel the archive for the user mailbox?"
+
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Enables archiving."
+
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " No change made."
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
+
+    switch ($result)
+        {
+            0 {Enable-Mailbox -Identity $upn -Archive}
+            1 {"Skipping Online Archive"}
+        }
+    
+}
+
+
 ########################################################
 #Step1: ask values, show them and create user
 ########################################################
@@ -336,17 +531,39 @@ step1
 #TODO: Step3: Office365 settings
 ########################################################
 
+#get Office365 credentials
+#$global:o365credential = Get-Credential
+
+#connectoToMsol
+#connectToExchangeOnline
+
     ########################################################
     #TODO: Office365 settings (licenses, groups, ...)
     ########################################################
+    askForO365Licenses
+    askForO365GroupMembership
 
     ########################################################
     #TODO: Exchange online settings
     ########################################################
 
+    #TODO: upload profile photo, refer to other script
+    enableOnlineArchive
+
     ########################################################
     #TODO: SFB settings
     ########################################################
+
+########################################################
+#TODO: close Office365 connections
+######################################################## 
+
+disconnectFromExchangeOnline
+
+
+########################################################
+#TODO: create Teamviewer account
+######################################################## 
 
 ########################################################
 #TODO: Logging
