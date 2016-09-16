@@ -2,13 +2,15 @@
 #load dependencies
 ########################################################
 
-#import-module ActiveDirectory
+import-module ActiveDirectory
 
 
 ########################################################
 #functions
 ########################################################
 
+#TODO: generate password if left empty
+##WORKS##
 function checkPassword{
     if ($global:Password -ne $global:Password2) {
         Write-Host "`n ---------Retype the password---------"
@@ -21,6 +23,7 @@ function checkPassword{
     }
 }
 
+
 function checkIfUsernameExists($username){
     $userexists=$null
     Try { 
@@ -32,7 +35,7 @@ function checkIfUsernameExists($username){
     }
 }
 
-#TODO: generate password if left empty
+##WORKS##
 function generateUsername($first, $last){
     $first = $first.Substring(0,1)
     $last = $last.Substring(0,1)
@@ -59,28 +62,27 @@ function generateUsername($first, $last){
             0 {" Username set to $global:username@uf.be"}
             1 {$global:username = Read-Host " Fill in a new username (without @uf.be)"}
         }
-
 }
 
+##WORKS##
 function generateAddresses($first, $last){
 
     $last = $last -replace '\s',''
     $global:primarymail = $firstname+"."+$lastname+"@Userfull.be"
     $global:proxyaddress = $global:username+"@uf.be"
-
 }
 
+##WORKS##
 function checkMobile($nr){
 
     if ($nr -NotMatch '^\+\d{2}\s\d{3}\s\d{2}\s\d{2}\s\d{2}$') {
         $global:Mobile = Read-Host "`n incorrect format (example: +32 123 45 67 89)"
         checkMobile $global:Mobile
     }
-
 }
 
+##WORKS##
 function askRole{
-
     $title = " "
     $message = " What is the user role?"
 
@@ -129,9 +131,9 @@ function askRole{
             8 {$global:userOU = "OU=External,OU=Users,OU=Userfull,DC=UF,DC=be"}
 
         }
-
 }
 
+##WORKS##
 function setDeveloper {
     $title = " Developer?"
     $message = " Add the user to the developer group??"
@@ -153,6 +155,7 @@ function setDeveloper {
         }
 }
 
+##WORKS##
 function setTechsupport {
     $title = " Techsupport?"
     $message = " Add the user to the UF Techsupport group?"
@@ -174,6 +177,7 @@ function setTechsupport {
         }
 }
 
+##WORKS##
 function setFAP {
     $title = " FAP?"
     $message = " Add the user to the FAP group?"
@@ -218,7 +222,7 @@ function syncWithO365 {
     Write-Host "`n ------------------"
 }
 
-
+##WORKS##
 function askValues{
     $global:FirstName = Read-Host "`n First name"
     $global:LastName = Read-Host "`n Last name"
@@ -255,6 +259,7 @@ function askValues{
     setFAP
 }
 
+##WORKS##
 function showValues{
 
     Write-Host "`n `n -----------------------------------"
@@ -278,12 +283,14 @@ function showValues{
     Write-Host "----------------------------------- `n"
 }
 
+##WORKS##
 function step1{
     askValues
     showvalues
     askForAccountCreation
 }
 
+##WORKS##
 function askForAccountCreation{
     $title = " create user"
     $message = " An account with the listed attributes will be created. Continue?"
@@ -309,33 +316,43 @@ function askForAccountCreation{
         }
 }
 
+function enableDialIn{
+    $upn = $global:username+"@uf.be"
+    Get-ADUser $upn| Set-ADUser -replace @{msnpallowdialin=$true} 
+}
+
 #TODO: create user
 function createUser{
 
     Write-Host "creating AD user"
-    #correct dial-in settings
-    #Get-ADUser username| Set-ADUser -replace @{msnpallowdialin=$true}
 
+    #correct dial-in settings
+    enableDialIn
 }
 
-function connectoToMsol{
+##WORKS##
+function connectToMsol{
 
+    if (!$global:o365credential) { $global:o365credential = get-credential }
     Connect-MsolService -Credential $global:o365credential 
 }
 
+##WORKS##
 function connectToExchangeOnline{
 
+    if (!$global:o365credential) { $global:o365credential = get-credential }
+    
     $global:EOSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $global:o365credential -Authentication Basic -AllowRedirection
     Import-PSSession $global:EOSession
-
 }
 
+##WORKS##
 function disconnectFromExchangeOnline{
 
     Remove-PSSession $global:EOSession
-
 }
 
+##WORKS##
 function askForO365Licenses{
     $title = " Office 365 licenses"
     $message = " Does the user need the default licenses? (Office 365 E3, Intune and CRM)"
@@ -361,6 +378,7 @@ function askForO365Licenses{
         }
 }
 
+##WORKS##
 function askForO365LicensesSpecific{
     $title = " Office 365 E3"
     $message = " Does the user need Office 365 E3?"
@@ -422,7 +440,6 @@ function askForO365LicensesSpecific{
         } 
 
     assignOffice365licenses $e3 $intune $CRM
-
 }
 
 function assignOffice365licenses($e3, $intune, $CRM){
@@ -441,7 +458,7 @@ function assignOffice365licenses($e3, $intune, $CRM){
 
     #TODO: finish function
 
-    $upn = $global:username"@uf.be"
+    $upn = $global:username+"@uf.be"
 
     if ($e3 -eq $True) {
         Write-Host "Setting E3 license"
@@ -457,9 +474,9 @@ function assignOffice365licenses($e3, $intune, $CRM){
         Write-Host "setting CRM license"
         Set-MsolUserLicense -UserPrincipalName $upn -AddLicenses "UF365:CRMIUR" 
     }
-        
 }
 
+##WORKS##
 function askForO365GroupMembership{
     $title = " Office 365 groups"
     $message = " Add the user to the default groups?"
@@ -482,14 +499,14 @@ function askForO365GroupMembership{
 }
 
 function addUserToMsolGroups{
-    $upn = $global:username"@uf.be"
+    $upn = $global:username+"@uf.be"
     $memberid = Get-MsolUser -UserPrincipalName $upn
     $groupid = Get-MsolGroup | Where-Object {$_.DisplayName -eq "Userfull for SPS"}
     Add-MsolGroupMember -GroupObjectId $groupid.ObjectId -GroupMemberObjectId $memberid.ObjectId -GroupMemberType Use
 }
 
 function enableOnlineArchive{
-    $upn = $global:username"@uf.be"
+    $upn = $global:username+"@uf.be"
 
     $title = " Exchange Online archive"
     $message = " Enabel the archive for the user mailbox?"
@@ -508,63 +525,43 @@ function enableOnlineArchive{
             0 {Enable-Mailbox -Identity $upn -Archive}
             1 {"Skipping Online Archive"}
         }
-    
 }
 
+##WORKS##
+function browseFile($initialDirectory){
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+    
+    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $OpenFileDialog.initialDirectory = $initialDirectory
+    $OpenFileDialog.filter = "Image Files (*.jpg)|*.jpg"
+    $OpenFileDialog.ShowDialog() | Out-Null
+    $OpenFileDialog.filename
+}
 
-########################################################
-#Step1: ask values, show them and create user
-########################################################
+function uploadProfilePhoto{
+    $upn = $global:username+"@uf.be"
+    $userphoto = browseFile
+    Set-UserPhoto -Identity $upn -PictureData ([System.IO.File]::ReadAllBytes($userphoto)) -Confirm:$false
+}
 
-step1
+##WORKS##
+function askForProfilePhoto{
+    $title = " Office 365 Profile photo"
+    $message = " Do you wish to select a photo to upload as a profile photo for the new user?"
 
+    $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
+        " Select a photo."
 
+    $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
+        " Skip this step."
 
-########################################################
-#TODO: Step2: Sync with Office365
-########################################################
+    $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
 
-#Azure AD sync
-#syncWithO365
+    $result = $host.ui.PromptForChoice($title, $message, $options, 0) 
 
-########################################################
-#TODO: Step3: Office365 settings
-########################################################
-
-#get Office365 credentials
-#$global:o365credential = Get-Credential
-
-#connectoToMsol
-#connectToExchangeOnline
-
-    ########################################################
-    #TODO: Office365 settings (licenses, groups, ...)
-    ########################################################
-    askForO365Licenses
-    askForO365GroupMembership
-
-    ########################################################
-    #TODO: Exchange online settings
-    ########################################################
-
-    #TODO: upload profile photo, refer to other script
-    enableOnlineArchive
-
-    ########################################################
-    #TODO: SFB settings
-    ########################################################
-
-########################################################
-#TODO: close Office365 connections
-######################################################## 
-
-disconnectFromExchangeOnline
-
-
-########################################################
-#TODO: create Teamviewer account
-######################################################## 
-
-########################################################
-#TODO: Logging
-########################################################
+    switch ($result)
+        {
+            0 {uploadProfilePhoto}
+            1 {"Skipping photo upload"}
+        }
+}
