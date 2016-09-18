@@ -7,6 +7,14 @@ import-module ActiveDirectory
 
 ########################################################
 #functions
+#
+#TODO:
+#   more checks 
+#   manpages
+#   reusablity (provide variable isntead of using global variable)
+#   Misc tasks (unlock user, disable user,...)
+#   add user to distr_<customername> groups (PRTG & ckure)
+#   different options based on internal, external and intern user
 ########################################################
 
 #TODO: generate password if left empty
@@ -25,6 +33,7 @@ function checkPassword{
 
 
 function checkIfUsernameExists($username){
+    #keep asking until not exists
     $userexists=$null
     Try { 
         $userexists = Get-ADUser -Identity $global:username 
@@ -32,6 +41,7 @@ function checkIfUsernameExists($username){
     
     if (userexists) {
         $global:username = Read-Host "`n Username $global:username exists, fill in a new username (without @uf.be)"
+        checkIfUsernameExists($global:username)
     }
 }
 
@@ -41,8 +51,7 @@ function generateUsername($first, $last){
     $last = $last.Substring(0,1)
     $global:username = "$first$last"
 
-    #TODO check if username exists
-    #checkIfUsernameExists $global:username
+    checkIfUsernameExists $global:username
 
     $title = " "
     $message = " The username $global:username@uf.be will be used. Continue?"
@@ -81,6 +90,7 @@ function checkMobile($nr){
     }
 }
 
+#TODO: include jobtitle
 ##WORKS##
 function askRole{
     $title = " "
@@ -120,15 +130,15 @@ function askRole{
 
     switch ($result)
         {
-            0 {$global:userOU = "OU=APP,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            1 {$global:userOU = "OU=HR,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            2 {$global:userOU = "OU=Management,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            3 {$global:userOU = "OU=MSP,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            4 {$global:userOU = "OU=OI,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            5 {$global:userOU = "OU=PLT,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            6 {$global:userOU = "OU=SOL,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            7 {$global:userOU = "OU=Interns,OU=Users,OU=Userfull,DC=UF,DC=be"}
-            8 {$global:userOU = "OU=External,OU=Users,OU=Userfull,DC=UF,DC=be"}
+            0 {$global:userOU = "OU=APP,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Applications"}
+            1 {$global:userOU = "OU=HR,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Human Resources"}
+            2 {$global:userOU = "OU=Management,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Management"}
+            3 {$global:userOU = "OU=MSP,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Marketing and Sales"}
+            4 {$global:userOU = "OU=OI,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Order Intake and Finance"}
+            5 {$global:userOU = "OU=PLT,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Platform"}
+            6 {$global:userOU = "OU=SOL,OU=Employees,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Solutions"}
+            7 {$global:userOU = "OU=Interns,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "Intern"}
+            8 {$global:userOU = "OU=External,OU=Users,OU=Userfull,DC=UF,DC=be"; $global:userTitle = "External"}
 
         }
 }
@@ -198,7 +208,6 @@ function setFAP {
             1 {$global:fapgroup = $False}
         }
 }
-
 
 function syncWithO365 {
     $title = " ------------------ `n O365 Sync"
@@ -288,6 +297,7 @@ function step1{
     askValues
     showvalues
     askForAccountCreation
+    addUserToLocalGroups
 }
 
 ##WORKS##
@@ -326,8 +336,30 @@ function createUser{
 
     Write-Host "creating AD user"
 
+    $fullname = $global:FirstName + " " + $global:LastName
+    New-ADUser -Name $fullname -SamAccountName $global:username -GivenName $global:FirstName -Surname $global:LastName -DisplayName $fullname -Path $global:userOU -OtherAttributes @{'Title'=$global:userTitle} -AccountPassword $global:Password -Enabled $true
+    
     #correct dial-in settings
     enableDialIn
+}
+
+
+function addUserToLocalGroups{
+# add to defaultgroups (medewerkers)
+# Add-ADGroupMember -Identity 'SalesUsers' -Members JoeBloggs,SarahJane
+
+# add to groups with flags set
+if ($global:devgroup) {
+    Add-ADGroupMember -Identity "Developers" -Members $global:username
+}
+
+if ($global:uftechgroup) {
+    Add-ADGroupMember -Identity "UFTechSupport" -Members $global:username
+}
+p
+if ($global:fapgrou) {
+    #Add-ADGroupMember -Identity "UFTechSupport" -Members $global:username
+}
 }
 
 ##WORKS##
