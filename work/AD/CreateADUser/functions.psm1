@@ -9,6 +9,7 @@ import-module ActiveDirectory
 #functions
 #
 #TODO:
+#   set default calendar permissions
 #   more checks 
 #   manpages
 #   reusablity (provide variable isntead of using global variable)
