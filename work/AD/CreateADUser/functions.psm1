@@ -27,21 +27,21 @@ function checkPassword{
         $global:Password2 = Read-Host ' Retype Password:'
         checkpassword
     }else{
-
+        $global:Password = $global:Password2 | ConvertTo-SecureString -AsPlainText -Force
         Write-Host "`n Password set"
-    }
+    }    
 }
 
-
+##WORKS##
 function checkIfUsernameExists($username){
     #keep asking until not exists
     $userexists=$null
     Try { 
-        $userexists = Get-ADUser -Identity $global:username 
+        $userexists = Get-ADUser -Identity $username 
     } Catch {}
     
-    if (userexists) {
-        $global:username = Read-Host "`n Username $global:username exists, fill in a new username (without @uf.be)"
+    if ($userexists) {
+        $global:username = Read-Host "`n Username $username exists, fill in a new username (without @uf.be)"
         checkIfUsernameExists($global:username)
     }
 }
@@ -327,40 +327,51 @@ function askForAccountCreation{
         }
 }
 
+##WORKS##
 function enableDialIn{
-    $upn = $global:username+"@uf.be"
-    Get-ADUser $upn| Set-ADUser -replace @{msnpallowdialin=$true} 
+
+    Get-ADUser $global:username| Set-ADUser -replace @{msnpallowdialin=$true} 
 }
 
 #TODO: create user
+#TODO(values): fix telephonenr, email & UPN
 function createUser{
 
     Write-Host "creating AD user"
 
     $fullname = $global:FirstName + " " + $global:LastName
-    New-ADUser -Name $fullname -SamAccountName $global:username -GivenName $global:FirstName -Surname $global:LastName -DisplayName $fullname -Path $global:userOU -OtherAttributes @{'Title'=$global:userTitle} -AccountPassword $global:Password -Enabled $true
-    
+    $upn = $global:username+"@uf.be"
+    try{
+        New-ADUser -Name $fullname -UserPrincipalName $upn -SamAccountName $global:username -GivenName $global:FirstName -Surname $global:LastName -DisplayName $fullname -Path $global:userOU -Description $global:userTitle -Title $global:userTitle -Department $global:userTitle -AccountPassword $global:Password -PasswordNeverExpires $true -Enabled $true -ErrorAction Stop
+    }
+    catch{
+        Write-Output "Could not create user."
+    }
+
     #correct dial-in settings
     enableDialIn
 }
 
 
 function addUserToLocalGroups{
-# add to defaultgroups (medewerkers)
-# Add-ADGroupMember -Identity 'SalesUsers' -Members JoeBloggs,SarahJane
+    # add to defaultgroups (medewerkers)
+    Add-ADGroupMember -Identity "distr_medewerkers" -Members $global:username
 
-# add to groups with flags set
-if ($global:devgroup) {
-    Add-ADGroupMember -Identity "Developers" -Members $global:username
-}
+    # add to groups with flags set
+    if ($global:devgroup) {
+        Add-ADGroupMember -Identity "sec_development" -Members $global:username
+        Add-ADGroupMember -Identity "distr_development" -Members $global:username
+    }
 
-if ($global:uftechgroup) {
-    Add-ADGroupMember -Identity "UFTechSupport" -Members $global:username
-}
-p
-if ($global:fapgrou) {
-    #Add-ADGroupMember -Identity "UFTechSupport" -Members $global:username
-}
+    if ($global:uftechgroup) {
+        Add-ADGroupMember -Identity "distr_uftechsupport" -Members $global:username
+    }
+
+    if ($global:fapgroup) {
+        Add-ADGroupMember -Identity "sec_FAP" -Members $global:username
+        Add-ADGroupMember -Identity "sec_finance" -Members $global:username
+        Add-ADGroupMember -Identity "sec_Facturatie" -Members $global:username
+    }
 }
 
 ##WORKS##
