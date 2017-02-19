@@ -2,7 +2,7 @@
 #load dependencies
 ########################################################
 
-import-module ActiveDirectory
+#import-module ActiveDirectory
 
 
 ########################################################
@@ -12,10 +12,12 @@ import-module ActiveDirectory
 #   set default calendar permissions
 #   more checks 
 #   manpages
-#   reusablity (provide variable isntead of using global variable)
+#   reusablity (provide variable instead of using global variable)
 #   Misc tasks (unlock user, disable user,...)
 #   add user to distr_<customername> groups (PRTG & ckure)
 #   different options based on internal, external and intern user
+#   create Teamviewer account
+#   CRM configuration if possible?
 ########################################################
 
 #TODO: generate password if left empty
@@ -84,6 +86,13 @@ function generateAddresses($first, $last){
 }
 
 ##WORKS##
+function fillInMailAttributes{
+    Get-ADUser -Identity $global:username| Set-ADUser -EmailAddress $global:primarymail
+    Get-ADUser -Identity $global:username| Set-ADUser -Add @{proxyAddresses = "SMTP:"+$global:primarymail}
+    Get-ADUser -Identity $global:username| Set-ADUser -Add @{proxyAddresses = "smtp:"+$global:proxyaddress}
+}
+
+##WORKS##
 function checkMobile($nr){
 
     if ($nr -NotMatch '^\+\d{2}\s\d{3}\s\d{2}\s\d{2}\s\d{2}$') {
@@ -92,7 +101,6 @@ function checkMobile($nr){
     }
 }
 
-#TODO: include jobtitle
 ##WORKS##
 function askRole{
     $title = " "
@@ -211,6 +219,7 @@ function setFAP {
         }
 }
 
+##WORKS##
 function syncWithO365 {
     $title = " ------------------ `n O365 Sync"
     $message = " Sync the on premise Active Directory with Office 365?"
@@ -353,7 +362,7 @@ function createUser{
     enableDialIn
 }
 
-
+##WORKS##
 function addUserToLocalGroups{
     # add to defaultgroups (medewerkers)
     Add-ADGroupMember -Identity "distr_medewerkers" -Members $global:username
@@ -387,7 +396,7 @@ function connectToExchangeOnline{
 
     if (!$global:o365credential) { $global:o365credential = get-credential }
     
-    $global:EOSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $global:o365credential -Authentication Basic -AllowRedirection
+    $global:EOSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/?proxymethod=rps -Credential $global:o365credential -Authentication Basic -AllowRedirection
     Import-PSSession $global:EOSession
 }
 
@@ -417,7 +426,7 @@ function askForO365Licenses{
 
     switch ($result)
         {
-            0 {assignOffice365licenses($True, $True, $True)}
+            0 {assignOffice365licenses $True $True $True}
             1 {askForO365LicensesSpecific}
             2 {"Skipping license assignment"}
         }
@@ -487,6 +496,14 @@ function askForO365LicensesSpecific{
     assignOffice365licenses $e3 $intune $CRM
 }
 
+##WORKS##
+function assignMsolLocation{
+
+    $upn = $global:username+"@uf.be"    
+    Set-MsolUser -UserPrincipalName $upn -UsageLocation BE
+}
+
+##WORKS##
 function assignOffice365licenses($e3, $intune, $CRM){
     <#
     available licenses
@@ -504,6 +521,9 @@ function assignOffice365licenses($e3, $intune, $CRM){
     #TODO: finish function
 
     $upn = $global:username+"@uf.be"
+
+    #set location
+    assignMsolLocation
 
     if ($e3 -eq $True) {
         Write-Host "Setting E3 license"
@@ -543,6 +563,7 @@ function askForO365GroupMembership{
         }
 }
 
+##WORKS##
 function addUserToMsolGroups{
     $upn = $global:username+"@uf.be"
     $memberid = Get-MsolUser -UserPrincipalName $upn
@@ -550,6 +571,7 @@ function addUserToMsolGroups{
     Add-MsolGroupMember -GroupObjectId $groupid.ObjectId -GroupMemberObjectId $memberid.ObjectId -GroupMemberType Use
 }
 
+##WORKS##
 function enableOnlineArchive{
     $upn = $global:username+"@uf.be"
 
@@ -583,7 +605,12 @@ function browseFile($initialDirectory){
     $OpenFileDialog.filename
 }
 
+##WORKS##
 function uploadProfilePhoto{
+
+    #source:  https://blogs.technet.microsoft.com/cloudtrek365/2014/12/31/uploading-high-resolution-photos-using-powershell-for-office-365/
+    #preferred resolution:  648 pixels by 648 pixels
+
     $upn = $global:username+"@uf.be"
     $userphoto = browseFile
     Set-UserPhoto -Identity $upn -PictureData ([System.IO.File]::ReadAllBytes($userphoto)) -Confirm:$false
