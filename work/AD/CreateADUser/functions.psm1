@@ -74,6 +74,7 @@ function generateUsername($first, $last){
         }
 }
 
+#TODO using wrong variables? 
 ##WORKS##
 function generateAddresses($first, $last){
 
